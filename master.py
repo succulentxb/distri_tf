@@ -46,3 +46,9 @@ for data in data_list:
 data_ws = {
     'sizes': sizes
 }
+
+data_ps = {
+    'sizes': sizes,
+    'train_data_inputs': train_data_inputs,
+    'train_'
+}
