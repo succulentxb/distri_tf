@@ -65,10 +65,6 @@ def push_para(para_name, value, index=None):
 def sigmiodal(inputs):
     return (np.exp(inputs) / (np.exp(inputs) + 1)).tolist()
 
-def sigmiodal_deri(inputs):
-    tmp = np.array(sigmiodal(inputs))
-    return (tmp * (1-tmp)).tolist()
-
 # forward propagation
 def forward():
     '''
