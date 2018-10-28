@@ -1,6 +1,7 @@
 import socket
 import json
 import network_ps as nt 
+import numpy as np
 
 LARGEST_RECV = 2**16
 
@@ -30,4 +31,10 @@ while True:
     ws_request = ws_sock.recv(LARGEST_RECV)
     ws_request = json.loads(ws_request.decode('utf-8'))
     # if ws_request['request'] == '':
+
+
+def back(network):
+    network.para['outputs_deris'] = network.para['outputs'] - network.para['expec_outputs']
+    
+    network.para['hl_out_deris'][-1] = np.dot(network)
     
