@@ -3,61 +3,69 @@ import json
 import csv
 
 LARGEST_RECV = 2**16
+MASTER_CLIENT_PROT = 10000
+PS_MASTER_PORT = 10001
 
-# Waiting for user inputs from client.
-master_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-host = socket.gethostname()
-master_port = 10000
+if __name__ == '__main__':
+    host = socket.gethostname()
+    # Build a server for client.
+    master_client_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    master_client_sock.bind((host, MASTER_CLIENT_PROT))
+    master_client_sock.listen(1)
+    # Build a server for parameters server.
+    master_ps_sock = socket.socket()
 
-master_sock.bind((host, master_port))
-master_sock.listen(1)
+    # connection with ps
+    print('connecting with parameters server...')
+    master_ps_sock.connect((host, PS_MASTER_PORT))
+    print('connected with parameters server!')
 
-print('waiting for inputs from client...')
-client_sock, addr = master_sock.accept()
-# print("client addr: %s" % str(addr))
-inputs = client_sock.recv(LARGEST_RECV)
-print('master recieved inputs:\n%s' % inputs.decode('utf-8'))
-client_sock.close()
+    # connection with client
+    print('connecting with client...')
+    client_sock, client_addr = master_client_sock.accept()
+    print('connected with client!')
+    
+    # waiting input data from client
+    user_inputs = client_sock.recv(LARGEST_RECV)
+    print('master recieved inputs:\n%s' % user_inputs.decode('utf-8'))    
 
-inputs = json.loads(inputs.decode('utf-8'))
+    user_inputs = json.loads(user_inputs.decode('utf-8'))
 
-# parse input sizes, '1,2,3' -> [1, 2, 3]
-sizes = inputs['sizes'].split(',')
-for i in range(len(sizes)):
-    sizes[i] = int(sizes[i])
-# print(sizes)
+    # parse input sizes, '1,2,3' -> [1, 2, 3]
+    sizes = user_inputs['sizes'].split(',')
+    for i in range(len(sizes)):
+        sizes[i] = int(sizes[i])
+    # print(sizes)
 
-train_file = open(inputs['train_file'], newline='')
-csvreader = csv.reader(train_file, delimiter=',')
-data_list = []
-for row in csvreader:
-    data_list.append(row)
+    # read train data from file
+    train_file = open(user_inputs['train_file'], newline='')
+    csvreader = csv.reader(train_file, delimiter=',')
+    data_list = []
+    for row in csvreader:
+        data_list.append(row)
 
-data_list = data_list[1:]
-train_x = []
-train_y = []
-for data in data_list:
-    train_y.append(data[0])
-    train_x.append(data[1:])
-# print(train_expec_outputs)
-# print(train_data_inputs)
+    data_list = data_list[1:] # remove first header row
+    train_x = []
+    train_y = []
+    for data in data_list:
+        train_y.append(data[0])
+        train_x.append(data[1:])
 
-# data_ws is data for worker server
-data_ws = {
-    'sizes': sizes
-}
+    data_ps = {
+        'operation': 'train',
+        'sizes': sizes,
+        'train_x': train_x,
+        'train_y': train_y
+    }
+    data_ps = json.dumps(data_ps, indent=4).encode('utf-8')
 
-# data_ps is data for parameters server
-data_ps = {
-    'sizes': sizes,
-    'train_data_inputs': train_x,
-    'train_': train_y
-}
+    master_ps_sock.send(data_ps)
 
-data_ws_json = json.dumps(data_ws, sort_keys=True, indent=4)
-data_ps_json = json.dumps(data_ps, sort_keys=True, indent=4)
-
-master_sock = socket.socket()
-ws_port = 10001
-master_sock.connect((host, ws_port))
-master_sock.send(data_ws_json.encode('utf-8'))
+    for i in range(len(train_x)):
+        # recieve train information from parameters server
+        train_info = master_ps_sock.recv(LARGEST_RECV)
+        train_info_decode = json.loads(train_info.decode('utf-8'))
+        # if training normally, print and send info to client
+        if train_info_decode['type'] == 'info':
+            print('train time: ', train_info_decode['train_time'])
+            master_client_sock.send(train_info)

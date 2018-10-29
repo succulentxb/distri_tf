@@ -4,22 +4,16 @@ import json
 import numpy as np
 
 LARGEST_RECV = 2**16
-'''
-# waiting for data from master
-ws_socket = socket.socket()
-host = socket.gethostname()
-ws_port = 10001
-ws_socket.bind((host, ws_port))
-ws_socket.listen(1)
-master_socket, addr = ws_socket.accept()
-data = master_socket.recv(LARGEST_RECV)
+WS_PS_PORT = 10002
 
-# print(data.decode('utf-8'))
-data = data.decode('utf-8')
-data = json.loads(data)
-'''
+# build connection with parameters server
+host = socket.gethostname()
 ws_ps_sock = socket.socket()
-sizes = [1, 1, 1]
+ws_ps_sock.bind((host, WS_PS_PORT))
+ws_ps_sock.listen(1)
+print('connecting with parameters server...')
+ps_sock, addr = ws_ps_sock.accept()
+print('connected with parameters server!')
 
 def requset_para(para_name, index=None):
     '''
@@ -28,8 +22,8 @@ def requset_para(para_name, index=None):
     :para para_name: name of para
     :type para_name: str
 
-    :para ws_ps_sock: socket connection between ws and ps, to get paras from ps
-    :type ws_ps_sock: socket object
+    :para ps_sock: socket connection between ws and ps, to get paras from ps
+    :type ps_sock: socket object
 
     :para index: the index of requested content in the whole para,
                  return content is para_name[index], if index is None, than return whole para
@@ -41,8 +35,8 @@ def requset_para(para_name, index=None):
         'index': index
     }
     request = (json.dumps(request, sort_keys=True, indent=4)).encode('utf-8')
-    ws_ps_sock.send(request)
-    response = ws_ps_sock.recv(LARGEST_RECV)
+    ps_sock.send(request)
+    response = ps_sock.recv(LARGEST_RECV)
     response = json.loads(response.decode('utf-8'))
     return response['content']
 
@@ -60,22 +54,19 @@ def push_para(para_name, value, index=None):
         'value': value
     }
     push = (json.dumps(push, sort_keys=True, indent=4)).encode('utf-8')
-    ws_ps_sock.send(push)
+    ps_sock.send(push)
 
 def sigmiodal(inputs):
     return (np.exp(inputs) / (np.exp(inputs) + 1)).tolist()
 
 # forward propagation
 def forward():
-    '''
-    :para nn_ws: network for worker server
-    '''
-    hl_inputs = (np.dot(requset_para(ws_ps_sock, 'inputs'), requset_para('weights', 0))).tolist()
+    hl_inputs = (np.dot(requset_para(ps_sock, 'inputs'), requset_para('weights', 0))).tolist()
     push_para('hl_inputs', hl_inputs, 0)
     hl_outputs = sigmiodal(requset_para('hl_inputs', 0))
     push_para('hl_outputs', hl_outputs, 0)
 
-    for i in range(1, len(sizes) - 2):
+    for i in range(1, len(requset_para('sizes')) - 2):
         hl_inputs = (np.dot(requset_para('hl_inputs', i-1), requset_para('weights', i)) - requset_para('biases', i)).tolist()
         push_para('hl_inputs', hl_inputs, i)
         hl_outputs = sigmiodal(requset_para('hl_inputs', i))

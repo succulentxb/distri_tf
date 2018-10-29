@@ -4,33 +4,8 @@ import network_ps as nt
 import numpy as np
 
 LARGEST_RECV = 2**16
-
-# waiting for data from master
-ps_sock = socket.socket()
-host = socket.gethostname()
-ps_port = 10002
-ps_sock.bind((host, ps_port))
-ps_sock.listen(1)
-print('waiting for data from master...')
-master_sock, master_addr = ps_sock.accept()
-
-data = master_sock.recv(LARGEST_RECV)
-data = data.decode('utf-8')
-data = json.loads(data)
-
-# initialize the bp network
-network = nt.Network(data['sizes'])
-
-# waiting for request from worker server
-ps_ws_sock = socket.socket()
-ps_ws_port = 10003
-ps_ws_sock.bind((host, ps_ws_sock))
-ws_sock, ws_addr = ps_ws_sock.accept()
-while True:
-    # recieve worker server request
-    ws_request = ws_sock.recv(LARGEST_RECV)
-    ws_request = json.loads(ws_request.decode('utf-8'))
-    # if ws_request['request'] == '':
+PS_MASTER_PORT = 10001
+WS_PS_PROT = 10002
 
 def sigmiodal_deri(inputs):
     tmp = np.exp(inputs) / (np.exp(inputs) + 1)
@@ -84,3 +59,34 @@ def back(network):
                                         network.para['learning_rate'] * np.array(network.para['outputs_weight_deris'])).tolist()
         network.para['outputs_bias'] = (np.array(network.para['outputs_bias']) - 
                                         network.para['learning_rate'] * np.array(network.para['outputs_bias_deris'])).tolist()
+
+
+if __name__ == '__main__':
+    host = socket.gethostname()
+
+    # build connection with worker server
+    ws_ps_sock = socket.socket()
+    ws_ps_sock.connect((host, WS_PS_PROT))
+
+    # build connection with master
+    ps_master_sock = socket.socket()
+    ps_master_sock.bind((host, PS_MASTER_PORT))
+    ps_master_sock.listen(1)
+    master_sock, master_addr = ps_master_sock.accept()
+
+    print('waiting for data from master...')
+    train_data = master_sock.recv(LARGEST_RECV)
+    train_data = json.loads(train_data.decode('utf-8'))
+    train_x = train_data['train_x']
+    train_y = train_data['train_y']
+
+    # initialize the bp network
+    network = nt.Network(train_data['sizes'])
+
+    # start train
+    train_upper = 100 # total train time
+    for train_time in range(train_upper):
+        for i in range(len(train_x)):
+            network.para['inputs'] = train_x[i]
+            network.para['expec_outputs'] = train_y[i]
+            print(network.para)
