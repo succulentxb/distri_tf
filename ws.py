@@ -79,7 +79,9 @@ def forward():
         hl_outputs = sigmiodal(requset_para('hl_inputs', i))
         push_para('hl_outputs', hl_outputs, i)
     
-    outputs = (np.dot(requset_para('hl_outputs', -1), requset_para('outputs_weight')) - requset_para('outputs_bias')).tolist()
+    outputs_in = (np.dot(requset_para('hl_outputs', -1), requset_para('outputs_weight')) - requset_para('outputs_bias')).tolist()
+    push_para('outputs_in', outputs_in)
+    outputs = sigmiodal(requset_para('outputs_in'))
     push_para('outputs', outputs)
 
 if __name__ == '__main__':

@@ -30,7 +30,7 @@ if __name__ == '__main__':
     }
     '''
     inputs = {
-        'sizes': '3,5,1',
+        'sizes': '3,50,1',
         'train_file': 'student_data.csv',
         'test_file': 'student_data.csv'
     }

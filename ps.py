@@ -13,8 +13,10 @@ def sigmiodal_deri(inputs):
 
 def back(network):
     network.para['outputs_deris'] = (np.array(network.para['outputs']) - network.para['expec_outputs']).tolist()
-    
-    network.para['hl_out_deris'][-1] = np.dot(network.para['outputs_weight'], network.para['outputs_deris'])
+    network.para['outputs_in_deris'] = sigmiodal_deri(network.para['outputs_in'])
+    network.para['outputs_products'] = (np.array(network.para['outputs_in_deris']) * network.para['outputs_deris']).tolist()
+
+    network.para['hl_out_deris'][-1] = np.dot(network.para['outputs_weight'], network.para['outputs_products'])
     network.para['thf_deris'][-1] = sigmiodal_deri(network.para['hl_inputs'][-1])
     network.para['thf_out_products'][-1] = (np.array(network.para['thf_deris'][-1]) * network.para['hl_out_deris'][-1]).tolist()
 
@@ -25,9 +27,9 @@ def back(network):
 
         # compute weight derivatives of output layer
         row = len(network.para['hl_outputs'][-1])
-        col = len(network.para['outputs_deris'])
+        col = len(network.para['outputs_products'])
         network.para['outputs_weight_deris'] = (np.dot(np.array(network.para['hl_outputs'][-1]).reshape(row, 1), 
-                                            np.array(network.para['outputs_deris']).reshape(1, col))).tolist()
+                                            np.array(network.para['outputs_products']).reshape(1, col))).tolist()
         
         # compute weight derivatives of input layer
         row = len(network.para['inputs'])
@@ -46,7 +48,7 @@ def back(network):
         for i in range(len(network.para['bias_deris'])):
             network.para['bias_deris'][i] = (np.array(network.para['thf_out_products'][i]) * (-1)).tolist()
         # derivatives of output layer bias
-        network.para['outputs_bias_deris'] = (np.array(network.para['outputs_deris']) * (-1)).tolist()
+        network.para['outputs_bias_deris'] = (np.array(network.para['outputs_products']) * (-1)).tolist()
 
         # update weights and biases with derivatives and learning rate
         for i in range(len(network.para['weights'])):
@@ -152,7 +154,8 @@ if __name__ == '__main__':
             # print('back start!')
             back(network)
             # print(network.para['outputs'])
-        print('train time: ', str(train_time + 1), ', loss value: ', str(loss_value(network)))
+        print('train time: %d, outputs: %s, expect outputs: %s' % 
+                    (train_time, str(network.para['outputs']), str(network.para['expec_outputs'])))
         #print(network.para['outputs'])
     
     while True:

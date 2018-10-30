@@ -15,6 +15,7 @@ class Network:
             'outputs': [],
             'outputs_bias': [],
             'outputs_weight': [],
+            'outputs_in': [],
 
             # hidden layer
             'hl_inputs': [],
@@ -38,7 +39,9 @@ class Network:
             # outputs weights derivates
             'outputs_weight_deris': [],
             # outputs bias derivatives
-            'outputs_bias_deris': []
+            'outputs_bias_deris': [],
+            'outputs_in_deris': [],
+            'outputs_products': []
         }
 
         for size in self.para['sizes'][1:-1]:
