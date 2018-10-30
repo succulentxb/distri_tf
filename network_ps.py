@@ -61,3 +61,4 @@ class Network:
         # initialize output layer
         self.para['outputs_weight'] = (np.random.rand(self.para['sizes'][-2], self.para['sizes'][-1]) * 2 - 1).tolist()
         self.para['outputs_bias'] = (np.zeros(self.para['sizes'][-1]) - 0.5).tolist()
+ 

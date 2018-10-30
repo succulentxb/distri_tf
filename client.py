@@ -6,6 +6,7 @@ MASTER_CLIENT_PORT = 10000
 LARGEST_RECV = 2**16
 
 if __name__ == '__main__':
+    '''
     # Get input data from user. If input with wrong fomat, exit.
     sizes = input('please enter the network structure like 3,10,1:\n')
     if not re.match(r'([0-9]+,){2,}[0-9]+', sizes):
@@ -27,7 +28,12 @@ if __name__ == '__main__':
         'train_file': train_file,
         'test_file': test_file
     }
-
+    '''
+    inputs = {
+        'sizes': '3,5,1',
+        'train_file': 'student_data.csv',
+        'test_file': 'student_data.csv'
+    }
     inputs_json = json.dumps(inputs, indent=4)
     print('accept input: %s' % inputs_json)
 

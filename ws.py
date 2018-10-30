@@ -15,6 +15,7 @@ print('connecting with parameters server...')
 ps_sock, addr = ws_ps_sock.accept()
 print('connected with parameters server!')
 
+
 def requset_para(para_name, index=None):
     '''
     request para from ps
@@ -38,7 +39,7 @@ def requset_para(para_name, index=None):
     ps_sock.send(request)
     response = ps_sock.recv(LARGEST_RECV)
     response = json.loads(response.decode('utf-8'))
-    return response['content']
+    return response['value']
 
 def push_para(para_name, value, index=None):
     '''
@@ -74,3 +75,20 @@ def forward():
     
     outputs = (np.dot(requset_para('hl_output', -1), requset_para('outputs_weight')) - requset_para('outputs_bias')).tolist()
     push_para('outputs', outputs)
+
+if __name__ == '__main__':
+    
+    while True:
+        ps_request = ps_sock.recv(LARGEST_RECV)
+        ps_requset = json.loads(ps_request.decode('utf-8'))
+        print(ps_request)
+        if ps_request['type'] == 'command': 
+            if ps_request['operation'] == 'train':
+                forward()
+                stop_request = {
+                    'type': 'command',
+                    'operation': 'stop'
+                }
+                stop_request = json.dumps(stop_request, indent=4).encode('utf-8')
+            elif ps_request['operation'] == 'stop':
+                break

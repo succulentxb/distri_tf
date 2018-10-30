@@ -60,6 +60,41 @@ def back(network):
         network.para['outputs_bias'] = (np.array(network.para['outputs_bias']) - 
                                         network.para['learning_rate'] * np.array(network.para['outputs_bias_deris'])).tolist()
 
+def tackle_ws_request(network, ws_ps_sock):
+    '''
+    tackle the requests from ws
+
+    :para ws_ps_sock: socket between ws and ps
+    :type ws_ps_sock: socket.socket
+    '''
+    while True:
+        request = ws_ps_sock.recv(LARGEST_RECV)
+        request = json.loads(request.decode('utf-8'))
+        if request['type'] == 'request':
+            para_name = request['para_name']
+            index = request['index']
+            if index == None:
+                value = network.para[para_name]
+            else:
+                value = network[para_name][index]
+            response = {
+                'type': 'response',
+                'para_name': para_name,
+                'index': index,
+                'value': value
+            }
+            response = json.dumps(response).encode('utf-8')
+            ws_ps_sock.send(response)
+        elif request['type'] == 'push':
+            para_name = request['para_name']
+            index = request['index']
+            if index == None:
+                network.para[para_name] = request['value']
+            else:
+                network.para[para_name][index] = request['value']
+        elif request['type'] == 'command':
+            if request['operation'] == 'stop':
+                return
 
 if __name__ == '__main__':
     host = socket.gethostname()
@@ -76,6 +111,7 @@ if __name__ == '__main__':
 
     print('waiting for data from master...')
     train_data = master_sock.recv(LARGEST_RECV)
+    print(train_data.decode('utf-8'))
     train_data = json.loads(train_data.decode('utf-8'))
     train_x = train_data['train_x']
     train_y = train_data['train_y']
@@ -89,4 +125,18 @@ if __name__ == '__main__':
         for i in range(len(train_x)):
             network.para['inputs'] = train_x[i]
             network.para['expec_outputs'] = train_y[i]
-            print(network.para)
+            # print(network.para)
+            train_cmd = {
+                'type': 'command',
+                'operation': 'train'
+            }
+            train_cmd = json.dumps(train_cmd, indent=4).encode('utf-8')
+            ws_ps_sock.send(train_cmd)
+            tackle_ws_request(network, ws_ps_sock)
+            back(network)
+            print(network.para['outputs'])
+        print('train time: ', str(train_time))
+        #print(network.para['outputs'])
+    
+    while True:
+        pass
