@@ -67,7 +67,7 @@ def sigmiodal(inputs):
 
 # forward propagation
 def forward():
-    print('start train with inputs: ', str(requset_para('inputs')))
+    # print('start train with inputs: ', str(requset_para('inputs')))
     hl_inputs = (np.dot(requset_para('inputs'), requset_para('weights', 0))).tolist()
     push_para('hl_inputs', hl_inputs, 0)
     hl_outputs = sigmiodal(requset_para('hl_inputs', 0))
@@ -91,7 +91,7 @@ if __name__ == '__main__':
         ps_request = json.loads(ps_request.decode('utf-8'))
         # print(ps_request)
         if ps_request['type'] == 'command': 
-            if ps_request['operation'] == 'train':
+            if ps_request['operation'] == 'run':
                 forward()
                 # forward completed, stop and switch to back in ps
                 # print('forward completed!')
