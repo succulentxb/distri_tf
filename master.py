@@ -45,6 +45,17 @@ if __name__ == '__main__':
         data_list.append(row)
 
     data_list = data_list[1:] # remove first header row
+    # transfer the number str to float
+    for i in range(len(data_list)):
+        for j in range(len(data_list[i])):
+            data_list[i][j] = float(data_list[i][j])
+
+    # preprocess the data, fit data to range 0-1
+    for i in range(len(data_list)):
+        data_list[i][1] /= 800
+        data_list[i][2] /= 4
+        data_list[i][3] /= 4
+    
     train_x = []
     train_y = []
     for data in data_list:

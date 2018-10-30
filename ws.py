@@ -35,10 +35,11 @@ def requset_para(para_name, index=None):
         'para_name': para_name,
         'index': index
     }
-    request = (json.dumps(request, sort_keys=True, indent=4)).encode('utf-8')
+    request = (json.dumps(request, indent=4)).encode('utf-8')
     ps_sock.send(request)
     response = ps_sock.recv(LARGEST_RECV)
     response = json.loads(response.decode('utf-8'))
+    # print(response)
     return response['value']
 
 def push_para(para_name, value, index=None):
@@ -56,13 +57,18 @@ def push_para(para_name, value, index=None):
     }
     push = (json.dumps(push, sort_keys=True, indent=4)).encode('utf-8')
     ps_sock.send(push)
+    response = ps_sock.recv(LARGEST_RECV)
+    response = json.loads(response.decode('utf-8'))
+    if response['status'] == 'success':
+        return 0
 
 def sigmiodal(inputs):
     return (np.exp(inputs) / (np.exp(inputs) + 1)).tolist()
 
 # forward propagation
 def forward():
-    hl_inputs = (np.dot(requset_para(ps_sock, 'inputs'), requset_para('weights', 0))).tolist()
+    print('start train with inputs: ', str(requset_para('inputs')))
+    hl_inputs = (np.dot(requset_para('inputs'), requset_para('weights', 0))).tolist()
     push_para('hl_inputs', hl_inputs, 0)
     hl_outputs = sigmiodal(requset_para('hl_inputs', 0))
     push_para('hl_outputs', hl_outputs, 0)
@@ -73,22 +79,25 @@ def forward():
         hl_outputs = sigmiodal(requset_para('hl_inputs', i))
         push_para('hl_outputs', hl_outputs, i)
     
-    outputs = (np.dot(requset_para('hl_output', -1), requset_para('outputs_weight')) - requset_para('outputs_bias')).tolist()
+    outputs = (np.dot(requset_para('hl_outputs', -1), requset_para('outputs_weight')) - requset_para('outputs_bias')).tolist()
     push_para('outputs', outputs)
 
 if __name__ == '__main__':
     
     while True:
         ps_request = ps_sock.recv(LARGEST_RECV)
-        ps_requset = json.loads(ps_request.decode('utf-8'))
-        print(ps_request)
+        ps_request = json.loads(ps_request.decode('utf-8'))
+        # print(ps_request)
         if ps_request['type'] == 'command': 
             if ps_request['operation'] == 'train':
                 forward()
+                # forward completed, stop and switch to back in ps
+                # print('forward completed!')
                 stop_request = {
                     'type': 'command',
                     'operation': 'stop'
                 }
                 stop_request = json.dumps(stop_request, indent=4).encode('utf-8')
+                ps_sock.send(stop_request)
             elif ps_request['operation'] == 'stop':
                 break
