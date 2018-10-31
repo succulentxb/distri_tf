@@ -3,16 +3,17 @@ import json
 import re
 
 MASTER_CLIENT_PORT = 10000
-LARGEST_RECV = 2**16
+LARGEST_RECV = 2**20
 
 if __name__ == '__main__':
-    '''
+    
     # Get input data from user. If input with wrong fomat, exit.
+    '''
     sizes = input('please enter the network structure like 3,10,1:\n')
     if not re.match(r'([0-9]+,){2,}[0-9]+', sizes):
         print('please enter a correct struct format like 1,2,3 with no space.')
         exit()
-
+    '''
     train_file = input('please enter csv file name of train set:\n')
     if not re.match(r'\w+\.csv', train_file):
         print('please enter a correct csv file name.')
@@ -24,16 +25,17 @@ if __name__ == '__main__':
         exit()
 
     inputs = {
-        'sizes': sizes,
+        'sizes': [3, 10, 2],
         'train_file': train_file,
         'test_file': test_file
     }
     '''
     inputs = {
-        'sizes': '3,50,1',
+        'sizes': '3,30,2',
         'train_file': 'student_data.csv',
         'test_file': 'student_data.csv'
     }
+    '''
     inputs_json = json.dumps(inputs, indent=4)
     print('accept input: %s' % inputs_json)
 
@@ -49,4 +51,6 @@ if __name__ == '__main__':
     while True:
         train_info = client_sock.recv(LARGEST_RECV)
         train_info = json.loads(train_info.decode('utf-8'))
-        print('train time: ', train_info['train_time'])
+        print(train_info['train_info'])
+        if train_info['train_info'] == 'done':
+            break

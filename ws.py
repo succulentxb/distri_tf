@@ -3,7 +3,7 @@ import socket
 import json
 import numpy as np
 
-LARGEST_RECV = 2**16
+LARGEST_RECV = 2**20
 WS_PS_PORT = 10002
 
 # build connection with parameters server
@@ -85,7 +85,7 @@ def forward():
     push_para('outputs', outputs)
 
 if __name__ == '__main__':
-    
+    print('worker server is working...')
     while True:
         ps_request = ps_sock.recv(LARGEST_RECV)
         ps_request = json.loads(ps_request.decode('utf-8'))
@@ -103,3 +103,4 @@ if __name__ == '__main__':
                 ps_sock.send(stop_request)
             elif ps_request['operation'] == 'stop':
                 break
+    print('work done!')
