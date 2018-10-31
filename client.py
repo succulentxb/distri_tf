@@ -14,6 +14,7 @@ if __name__ == '__main__':
         print('please enter a correct struct format like 1,2,3 with no space.')
         exit()
     '''
+    '''
     train_file = input('please enter csv file name of train set:\n')
     if not re.match(r'\w+\.csv', train_file):
         print('please enter a correct csv file name.')
@@ -31,11 +32,12 @@ if __name__ == '__main__':
     }
     '''
     inputs = {
-        'sizes': '3,30,2',
-        'train_file': 'student_data.csv',
-        'test_file': 'student_data.csv'
+        'sizes': [3, 10, 2],
+        'train_file': 'train.csv',
+        'test_file': 'test.csv',
+        'train_time': 100
     }
-    '''
+    
     inputs_json = json.dumps(inputs, indent=4)
     # print('accept input: %s' % inputs_json)
 
@@ -53,5 +55,23 @@ if __name__ == '__main__':
         train_info = json.loads(train_info.decode('utf-8'))
         print(train_info['train_info'])
         if train_info['train_info'] == 'done':
-            print('client work done!')
-            exit()
+            print('train done!')
+            break
+    
+    while True: 
+        gre = input('enter gre grades (200-800): ')
+        gpa = input('enter gpa (0.0-4.0): ')
+        rank = input('enter rank (1-4): ')
+
+        inputs = [float(gre), float(gpa), float(rank)]
+        compute_data = {
+            'type': 'command',
+            'operation': 'compute',
+            'inputs': inputs
+        }
+        compute_data = json.dumps(compute_data, indent=4).encode('utf-8')
+        client_sock.send(compute_data)
+        print('inputs sent, please wait for result...')
+        result = client_sock.recv(LARGEST_RECV)
+        result = json.loads(result.decode('utf-8'))
+        print('result: ', result['result'])

@@ -73,7 +73,7 @@ if __name__ == '__main__':
     print('recieved data from client, start parsing data...')    
 
     user_inputs = json.loads(user_inputs.decode('utf-8'))
-    sizes = user_inputs['sizes']
+    # sizes = user_inputs['sizes']
 
     # read train data from file
     train_x, train_y = csv_to_data(user_inputs['train_file'])
@@ -88,7 +88,8 @@ if __name__ == '__main__':
 
     data_ps = {
         'operation': 'train',
-        'sizes': sizes,
+        'sizes': user_inputs['sizes'],
+        'train_time': user_inputs['train_time'],
         'train_x': train_x,
         'train_y': train_y,
         'test_x': test_x,
@@ -108,5 +109,24 @@ if __name__ == '__main__':
             client_sock.send(train_info)
             if train_info_decode['train_info'] == 'done':
                 print('master work done!')
-                exit()
+                break
     
+    while True:
+        print('waiting for user input...')
+        compute_data = client_sock.recv(LARGEST_RECV)
+        compute_data = json.loads(compute_data.decode('utf-8'))
+        # print(compute_data_decode)
+        print('recieved user input: ', str(compute_data['inputs']))
+        # normalize the data to [0, 1]
+        compute_data['inputs'][0] /= 800
+        compute_data['inputs'][1] /= 4
+        compute_data['inputs'][2] /= 4
+        compute_data = json.dumps(compute_data).encode('utf-8')
+
+        master_ps_sock.send(compute_data)
+        print('waiting for compute result from parameters server...')
+        result = master_ps_sock.recv(LARGEST_RECV)
+        result_decode = json.loads(result.decode('utf-8'))
+        print('compute result: ', str(result_decode['result']))
+        client_sock.send(result)
+        # print('')
