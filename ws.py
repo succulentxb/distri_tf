@@ -103,4 +103,7 @@ if __name__ == '__main__':
                 ps_sock.send(stop_request)
             elif ps_request['operation'] == 'stop':
                 break
-    print('work done!')
+        elif ps_request['type'] == 'info':
+            if ps_request['train_info'] == 'done':
+                print('worker server work done!')
+                exit()

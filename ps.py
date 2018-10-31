@@ -56,7 +56,7 @@ if __name__ == '__main__':
             nt.back(network)
             # print(network.para['outputs'])
         accu = nt.accuracy(network, ws_ps_sock, test_x, test_y)
-        train_info_str = 'train time: {:d}, accuracy: {:.2f}%'.format(train_time, accu*100)
+        train_info_str = 'train time: {:d}, accuracy: {:.2f}%'.format(train_time+1, accu*100)
         train_info = {
             'type': 'info',
             'train_info': train_info_str
@@ -64,5 +64,11 @@ if __name__ == '__main__':
         train_info = json.dumps(train_info).encode('utf-8')
         master_sock.send(train_info)
         print(train_info_str)
-        #print(network.para['outputs'])
-    
+    train_info = {
+        'type': 'info',
+        'train_info': 'done'
+    }
+    train_info = json.dumps(train_info).encode('utf-8')
+    master_sock.send(train_info)
+    ws_ps_sock.send(train_info)
+    print('parameters server work done!')    

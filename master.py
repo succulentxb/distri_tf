@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     master_ps_sock.send(data_ps)
     print('sent train data to parameters server.')
-    for i in range(len(train_x)):
+    while True:
         # recieve train information from parameters server
         train_info = master_ps_sock.recv(LARGEST_RECV)
         train_info_decode = json.loads(train_info.decode('utf-8'))
@@ -106,11 +106,7 @@ if __name__ == '__main__':
         if train_info_decode['type'] == 'info':
             print(train_info_decode['train_info'])
             client_sock.send(train_info)
-    train_info = {
-        'type': 'info',
-        'train_info': 'done'
-    }
-    train_info = json.dumps(train_info).encode('utf-8')
-    client_sock.send(train_info)
-    print('train done!')
+            if train_info_decode['train_info'] == 'done':
+                print('master work done!')
+                exit()
     

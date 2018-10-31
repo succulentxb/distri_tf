@@ -37,7 +37,7 @@ if __name__ == '__main__':
     }
     '''
     inputs_json = json.dumps(inputs, indent=4)
-    print('accept input: %s' % inputs_json)
+    # print('accept input: %s' % inputs_json)
 
     # Send user input to master.
     print('sending your input to master...')
@@ -53,4 +53,5 @@ if __name__ == '__main__':
         train_info = json.loads(train_info.decode('utf-8'))
         print(train_info['train_info'])
         if train_info['train_info'] == 'done':
-            break
+            print('client work done!')
+            exit()
